@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NFC</title>
+</head>
+
+<body>
+
+<p>Зареждане...</p>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+  "https://dnanabhqzdldrtsqpgbi.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_kfnwpu7Kk8wJUm-FRSnWvQ_x_7bcTiw";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+async function redirectNfc() {
+
+  const { data, error } =
+    await supabaseClient
+      .from("nfc_links")
+      .select("url")
+      .eq("code", "001")
+      .single();
+
+  if (error || !data) {
+
+    document.body.innerHTML =
+      "<h2>NFC кодът не е намерен.</h2>";
+
+    return;
+  }
+
+  window.location.href = data.url;
+}
+
+
+redirectNfc();
+
+</script>
+
+</body>
+</html>
