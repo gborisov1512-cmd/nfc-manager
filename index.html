@@ -3,98 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>NFC #001</title>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 50px 20px;
-    }
-
-    .error {
-      color: red;
-    }
-  </style>
+  <title>NFC Manager</title>
 </head>
 
 <body>
 
-  <h2 id="status">Зареждане...</h2>
+  <h1>NFC Manager</h1>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <script>
-
-    const SUPABASE_URL =
-      "https://dnanabhqzdldrtsqpgbi.supabase.co";
-
-    const SUPABASE_KEY =
-      "sb_publishable_kfnwpu7Kk8wJUm-FRSnWvQ_x_7bcTiw";
-
-    const supabaseClient =
-      window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-      );
-
-
-    async function openNfcLink() {
-
-      const status =
-        document.getElementById("status");
-
-
-      const result =
-        await supabaseClient
-          .from("nfc_links")
-          .select("code, url")
-          .eq("code", "001")
-          .maybeSingle();
-
-
-      console.log("Supabase data:", result.data);
-      console.log("Supabase error:", result.error);
-
-
-      if (result.error) {
-
-        status.className = "error";
-
-        status.innerHTML =
-          "Грешка при връзката със сървъра:<br><br>" +
-          result.error.message;
-
-        return;
-      }
-
-
-      if (!result.data) {
-
-        status.className = "error";
-
-        status.innerHTML =
-          "NFC кодът 001 не е намерен.";
-
-        return;
-      }
-
-
-      status.innerHTML =
-        "Пренасочване...";
-
-
-      window.location.replace(
-        result.data.url
-      );
-
-    }
-
-
-    openNfcLink();
-
-  </script>
+  <p>Сайтът работи!</p>
 
 </body>
 </html>
