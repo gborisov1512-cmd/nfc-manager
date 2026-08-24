@@ -10,8 +10,12 @@
       font-family: Arial, sans-serif;
       max-width: 700px;
       margin: auto;
-      padding: 25px 15px;
+      padding: 20px;
       background: #f5f5f5;
+    }
+
+    h1 {
+      text-align: center;
     }
 
     .box {
@@ -25,48 +29,55 @@
       width: 100%;
       box-sizing: border-box;
       padding: 12px;
-      margin: 7px 0 12px;
+      margin: 6px 0 12px;
       border: 1px solid #ccc;
       border-radius: 8px;
       font-size: 16px;
     }
 
     button {
-      width: 100%;
-      padding: 12px;
+      padding: 10px 14px;
       border: 0;
       border-radius: 8px;
       background: #111;
       color: white;
-      font-size: 16px;
-      margin-top: 5px;
+      cursor: pointer;
+      margin: 4px 2px;
     }
 
-    button.secondary {
-      background: #777;
+    button:hover {
+      opacity: 0.85;
+    }
+
+    .danger {
+      background: #c62828;
+    }
+
+    .secondary {
+      background: #666;
     }
 
     .item {
       background: white;
       border: 1px solid #ddd;
       padding: 15px;
-      margin-top: 10px;
-      border-radius: 8px;
+      margin-top: 12px;
+      border-radius: 10px;
     }
 
     .nfc-url {
       word-break: break-all;
-      margin-top: 8px;
       font-size: 14px;
+      margin: 8px 0;
     }
 
     .hidden {
       display: none;
     }
 
-    #message {
+    #message,
+    #loginMessage {
       margin-top: 12px;
-      padding: 10px;
     }
   </style>
 </head>
@@ -74,7 +85,6 @@
 <body>
 
 <h1>📱 NFC Manager</h1>
-
 
 <!-- LOGIN -->
 
@@ -94,9 +104,7 @@
     placeholder="Парола"
   >
 
-  <button onclick="login()">
-    Вход
-  </button>
+  <button onclick="login()">Вход</button>
 
   <div id="loginMessage"></div>
 
@@ -114,7 +122,7 @@
     <input
       id="code"
       type="text"
-      placeholder="NFC код например 003"
+      placeholder="NFC код например 004"
     >
 
     <input
@@ -162,6 +170,9 @@ const SUPABASE_URL =
 const SUPABASE_KEY =
   "sb_publishable_kfnwpu7Kk8wJUm-FRSnWvQ_x_7bcTiw";
 
+const WORKER_URL =
+  "https://nfc-redirect.gborisov1512.workers.dev";
+
 
 const supabaseClient =
   window.supabase.createClient(
@@ -170,33 +181,43 @@ const supabaseClient =
   );
 
 
-const WORKER_URL =
-  "https://nfc-redirect.gborisov1512.workers.dev";
-
+// Проверка за вход
 
 async function checkUser() {
 
   const {
     data: { session }
-  } = await supabaseClient.auth.getSession();
+  } =
+    await supabaseClient.auth.getSession();
 
 
   if (session) {
 
-    document
-      .getElementById("loginBox")
-      .classList.add("hidden");
-
-    document
-      .getElementById("adminBox")
-      .classList.remove("hidden");
-
-    loadNfc();
+    showAdmin();
 
   }
 
 }
 
+
+// Показване на админ панела
+
+function showAdmin() {
+
+  document
+    .getElementById("loginBox")
+    .classList.add("hidden");
+
+  document
+    .getElementById("adminBox")
+    .classList.remove("hidden");
+
+  loadNfc();
+
+}
+
+
+// Вход
 
 async function login() {
 
@@ -211,8 +232,8 @@ async function login() {
     error
   } =
     await supabaseClient.auth.signInWithPassword({
-      email: email,
-      password: password
+      email,
+      password
     });
 
 
@@ -228,18 +249,12 @@ async function login() {
   }
 
 
-  document
-    .getElementById("loginBox")
-    .classList.add("hidden");
-
-  document
-    .getElementById("adminBox")
-    .classList.remove("hidden");
-
-  loadNfc();
+  showAdmin();
 
 }
 
+
+// Изход
 
 async function logout() {
 
@@ -249,6 +264,8 @@ async function logout() {
 
 }
 
+
+// Добавяне
 
 async function addNfc() {
 
@@ -261,10 +278,9 @@ async function addNfc() {
 
   if (!code || !targetUrl) {
 
-    document
-      .getElementById("message")
-      .textContent =
-      "Попълни и двете полета.";
+    showMessage(
+      "Попълни NFC кода и линка."
+    );
 
     return;
 
@@ -277,10 +293,9 @@ async function addNfc() {
 
   } catch {
 
-    document
-      .getElementById("message")
-      .textContent =
-      "Невалиден линк.";
+    showMessage(
+      "Линкът не е валиден."
+    );
 
     return;
 
@@ -300,35 +315,30 @@ async function addNfc() {
 
   if (error) {
 
-    document
-      .getElementById("message")
-      .textContent =
-      "Грешка: " + error.message;
+    showMessage(
+      "Грешка: " + error.message
+    );
 
     return;
 
   }
 
 
-  document
-    .getElementById("message")
-    .textContent =
-    "NFC кодът е добавен успешно!";
+  showMessage(
+    "NFC кодът е добавен успешно!"
+  );
 
 
-  document
-    .getElementById("code")
-    .value = "";
+  document.getElementById("code").value = "";
 
-  document
-    .getElementById("targetUrl")
-    .value = "";
-
+  document.getElementById("targetUrl").value = "";
 
   loadNfc();
 
 }
 
+
+// Зареждане
 
 async function loadNfc() {
 
@@ -380,11 +390,30 @@ async function loadNfc() {
 
 
     div.innerHTML = `
-      <strong>NFC #${item.code}</strong>
-      <div>${item.url}</div>
-      <div class="nfc-url">
-        ${WORKER_URL}/${item.code}
+      <strong>NFC #${escapeHtml(item.code)}</strong>
+
+      <div>
+        ${escapeHtml(item.url)}
       </div>
+
+      <div class="nfc-url">
+        ${WORKER_URL}/${encodeURIComponent(item.code)}
+      </div>
+
+      <button onclick="editNfc(${item.id}, '${escapeJs(item.code)}', '${escapeJs(item.url)}')">
+        ✏️ Редактирай
+      </button>
+
+      <button onclick="copyNfc('${escapeJs(item.code)}')">
+        📋 Копирай NFC адрес
+      </button>
+
+      <button
+        class="danger"
+        onclick="deleteNfc(${item.id}, '${escapeJs(item.code)}')"
+      >
+        🗑️ Изтрий
+      </button>
     `;
 
 
@@ -394,6 +423,184 @@ async function loadNfc() {
 
 }
 
+
+// Редактиране
+
+async function editNfc(id, code, oldUrl) {
+
+  const newUrl =
+    prompt(
+      "Нов линк за NFC #" + code,
+      oldUrl
+    );
+
+
+  if (newUrl === null) {
+
+    return;
+
+  }
+
+
+  try {
+
+    new URL(newUrl);
+
+  } catch {
+
+    alert("Невалиден линк.");
+
+    return;
+
+  }
+
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("nfc_links")
+      .update({
+        url: newUrl
+      })
+      .eq("id", id);
+
+
+  if (error) {
+
+    alert(
+      "Грешка: " + error.message
+    );
+
+    return;
+
+  }
+
+
+  alert(
+    "Линкът е променен успешно!"
+  );
+
+
+  loadNfc();
+
+}
+
+
+// Изтриване
+
+async function deleteNfc(id, code) {
+
+  const confirmed =
+    confirm(
+      "Сигурен ли си, че искаш да изтриеш NFC #" +
+      code +
+      "?"
+    );
+
+
+  if (!confirmed) {
+
+    return;
+
+  }
+
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("nfc_links")
+      .delete()
+      .eq("id", id);
+
+
+  if (error) {
+
+    alert(
+      "Грешка: " + error.message
+    );
+
+    return;
+
+  }
+
+
+  alert(
+    "NFC #" + code + " е изтрит."
+  );
+
+
+  loadNfc();
+
+}
+
+
+// Копиране
+
+async function copyNfc(code) {
+
+  const address =
+    WORKER_URL +
+    "/" +
+    encodeURIComponent(code);
+
+
+  try {
+
+    await navigator.clipboard.writeText(address);
+
+    alert(
+      "NFC адресът е копиран!"
+    );
+
+  } catch {
+
+    prompt(
+      "Копирай този адрес:",
+      address
+    );
+
+  }
+
+}
+
+
+// Съобщение
+
+function showMessage(text) {
+
+  document
+    .getElementById("message")
+    .textContent = text;
+
+}
+
+
+// За безопасно показване
+
+function escapeHtml(value) {
+
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+}
+
+
+function escapeJs(value) {
+
+  return String(value)
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "\\'");
+
+}
+
+
+// Стартиране
 
 checkUser();
 
